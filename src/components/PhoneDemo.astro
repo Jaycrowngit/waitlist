@@ -1,0 +1,123 @@
+---
+// Illustrative example of the app, not real transactions
+const samples = [
+  { ic: '📶', t: 'MTN 2GB data', s: '0803 *** 4412', a: 1200 },
+  { ic: '📱', t: 'Airtel airtime', s: '0812 *** 0937', a: 500 },
+  { ic: '💡', t: 'IBEDC prepaid', s: 'Token sent', a: 5000 },
+  { ic: '🎓', t: 'WAEC result PIN', s: '1 PIN', a: 3900 },
+  { ic: '📺', t: 'GOtv Jolli', s: 'Renewed', a: 4850 },
+  { ic: '📶', t: 'Glo 5GB data', s: '0805 *** 2291', a: 1800 },
+];
+const startBalance = 24500;
+---
+
+<div class="stage" id="phone" aria-hidden="true">
+  <div class="float">
+    <div class="phone">
+      <div class="wallet">
+        <span>Wallet balance</span>
+        <strong id="balance" data-start={startBalance}>₦{startBalance.toLocaleString('en-NG', { minimumFractionDigits: 2 })}</strong>
+      </div>
+      <ul class="feed" id="feed" data-samples={JSON.stringify(samples)}></ul>
+    </div>
+  </div>
+  <span class="chip chip-a">⚡ Done in seconds</span>
+  <span class="chip chip-b">🏦 Fund by bank transfer</span>
+</div>
+
+<script>
+  type Item = { ic: string; t: string; s: string; a: number; credit?: boolean };
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const feed = document.getElementById('feed')!;
+  const balanceEl = document.getElementById('balance')!;
+  const samples: Item[] = JSON.parse(feed.dataset.samples || '[]');
+  const TOP_UP: Item = { ic: '🏦', t: 'Wallet funded', s: 'Bank transfer', a: 20000, credit: true };
+  const LOW = 6000;
+
+  const naira = (n: number, dp = 0) =>
+    '₦' + n.toLocaleString('en-NG', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+
+  /* Wallet balance counts towards each new value */
+  let balance = Number(balanceEl.dataset.start) || 0;
+  let shown = balance;
+  let raf = 0;
+
+  function setBalance(target: number) {
+    balance = target;
+    cancelAnimationFrame(raf);
+    balanceEl.classList.remove('bump');
+    void balanceEl.offsetWidth;
+    balanceEl.classList.add('bump');
+
+    if (reduceMotion) {
+      shown = target;
+      balanceEl.textContent = naira(target, 2);
+      return;
+    }
+    const from = shown;
+    const t0 = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min((now - t0) / 700, 1);
+      shown = from + (target - from) * (1 - Math.pow(1 - p, 3));
+      balanceEl.textContent = naira(shown, 2);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+  }
+
+  /* Purchase feed: spend from the wallet, top up when it runs low */
+  let sampleIndex = 0;
+
+  function addFeedItem(updateBalance = true) {
+    const next = samples[sampleIndex % samples.length];
+    const item = balance - next.a < LOW ? TOP_UP : (sampleIndex++, next);
+
+    const li = document.createElement('li');
+    if (item.credit) li.className = 'credit';
+    li.innerHTML =
+      '<span class="ic"></span><span class="t"><b></b><small></small></span>' +
+      '<span><span class="amt"></span><span class="done"></span></span>';
+    li.querySelector('.ic')!.textContent = item.ic;
+    li.querySelector('b')!.textContent = item.t;
+    li.querySelector('small')!.textContent = item.s;
+    li.querySelector('.amt')!.textContent = (item.credit ? '+' : '') + naira(item.a);
+    li.querySelector('.done')!.textContent = item.credit ? 'Received' : 'Delivered';
+    feed.insertBefore(li, feed.firstChild);
+
+    if (updateBalance) setBalance(balance + (item.credit ? item.a : -item.a));
+
+    const items = feed.querySelectorAll('li:not(.leaving)');
+    if (items.length > 3) {
+      const last = items[items.length - 1];
+      last.classList.add('leaving');
+      setTimeout(() => last.remove(), 450);
+    }
+  }
+
+  // Seed the feed without touching the starting balance
+  addFeedItem(false);
+  addFeedItem(false);
+  addFeedItem(false);
+  if (!reduceMotion) setInterval(addFeedItem, 2800);
+
+  /* 3D tilt towards the pointer (mouse/trackpad only) */
+  const phone = document.querySelector<HTMLElement>('.phone')!;
+  const stage = document.getElementById('phone')!;
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  if (finePointer && !reduceMotion) {
+    const hero = document.querySelector<HTMLElement>('.hero')!;
+    hero.addEventListener('pointermove', (e) => {
+      const r = stage.getBoundingClientRect();
+      const dx = (e.clientX - (r.left + r.width / 2)) / window.innerWidth;
+      const dy = (e.clientY - (r.top + r.height / 2)) / window.innerHeight;
+      phone.style.setProperty('--ry', (dx * 18).toFixed(2) + 'deg');
+      phone.style.setProperty('--rx', (-dy * 14).toFixed(2) + 'deg');
+    });
+    hero.addEventListener('pointerleave', () => {
+      phone.style.setProperty('--ry', '0deg');
+      phone.style.setProperty('--rx', '0deg');
+    });
+  }
+</script>

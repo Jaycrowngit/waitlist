@@ -1,0 +1,65 @@
+---
+const words = ['data', 'airtime', 'electricity', 'exam PINs', 'cable TV'];
+---
+
+<section class="copy">
+  <p class="label">Byllora Waitlist</p>
+  <h1>
+    <span class="line"><span class="w" style="--i:0">Buy</span> <span class="w" style="--i:1"><span class="rotator" aria-live="polite" data-words={JSON.stringify(words)}><span>{words[0]}</span></span></span></span>
+    <span class="line"><span class="w" style="--i:2">in</span> <span class="w" style="--i:3">seconds.</span></span>
+  </h1>
+  <p class="intro">
+    Byllora puts data, airtime, electricity, exam PINs, cable TV and betting
+    top-ups in one wallet. Fund it once by bank transfer and pay for everything.
+  </p>
+  <div class="actions">
+    <button type="button" class="cta shine" id="openForm">
+      Join waitlist
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+    </button>
+    <span class="hint">Takes about a minute</span>
+  </div>
+</section>
+
+<script>
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* Rotating word */
+  const rotator = document.querySelector<HTMLElement>('.rotator')!;
+  const words: string[] = JSON.parse(rotator.dataset.words || '[]');
+  let wordIndex = 0;
+
+  if (!reduceMotion && words.length > 1) {
+    setInterval(() => {
+      const current = rotator.querySelector<HTMLElement>('span:not(.out)')!;
+      wordIndex = (wordIndex + 1) % words.length;
+
+      const next = document.createElement('span');
+      next.textContent = words[wordIndex];
+      next.className = 'in';
+
+      // Animate the yellow pill's width to the new word
+      rotator.style.width = rotator.offsetWidth + 'px';
+      current.className = 'out';
+      current.style.position = 'absolute';
+      rotator.appendChild(next);
+      const pad = parseFloat(getComputedStyle(rotator).paddingLeft) * 2;
+      rotator.style.width = next.offsetWidth + pad + 'px';
+
+      setTimeout(() => current.remove(), 400);
+    }, 2600);
+  }
+
+  /* Open form: swap the phone for the form */
+  const hero = document.querySelector('.hero')!;
+  const formCard = document.getElementById('formCard')!;
+
+  document.getElementById('openForm')!.addEventListener('click', () => {
+    formCard.hidden = false;
+    hero.classList.add('is-open');
+    if (window.innerWidth <= 860) {
+      formCard.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    }
+    setTimeout(() => document.getElementById('full_name')?.focus({ preventScroll: true }), 400);
+  });
+</script>

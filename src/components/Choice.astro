@@ -1,0 +1,50 @@
+---
+/** A group of radio "pills", with an optional "Other" text box. */
+interface Option {
+  value: string;
+  label?: string;
+}
+
+interface Props {
+  name: string;
+  question: string;
+  options: Option[];
+  otherPlaceholder?: string;
+  twoColumns?: boolean;
+}
+
+const { name, question, options, otherPlaceholder, twoColumns = false } = Astro.props;
+---
+
+<p class="q">{question}</p>
+<div class:list={['options', { 'options--two': twoColumns }]} data-name={name}>
+  {
+    options.map((o, i) => (
+      <label class="opt" style={`--i:${i}`}>
+        <input type="radio" name={name} value={o.value} />
+        <i />
+        <span>{o.label ?? o.value}</span>
+      </label>
+    ))
+  }
+  {
+    otherPlaceholder && (
+      <>
+        <label class="opt" style={`--i:${options.length}`}>
+          <input type="radio" name={name} value="__other" />
+          <i />
+          <span>Other</span>
+        </label>
+        <input
+          class="other"
+          type="text"
+          data-other={name}
+          placeholder={otherPlaceholder}
+          maxlength="60"
+          aria-label={otherPlaceholder}
+        />
+      </>
+    )
+  }
+</div>
+<small class="error" data-for={name}></small>

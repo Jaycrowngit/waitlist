@@ -1,0 +1,39 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Hero from '../components/Hero.astro';
+import PhoneDemo from '../components/PhoneDemo.astro';
+import WaitlistForm from '../components/WaitlistForm.astro';
+
+const services = ['Data bundles', 'Airtime', 'Electricity tokens', 'Exam PINs', 'Cable TV', 'Betting top-ups', 'One wallet'];
+---
+
+<Layout>
+  <div class="bg" aria-hidden="true">
+    <span class="blob b1"></span>
+    <span class="blob b2"></span>
+    <span class="blob b3"></span>
+  </div>
+
+  <header class="top">
+    <img src="/FL1.svg" alt="Byllora" class="logo" />
+  </header>
+
+  <main class="hero">
+    <Hero />
+
+    <section class="side">
+      <PhoneDemo />
+      <WaitlistForm />
+    </section>
+  </main>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">
+      {[...services, ...services].map((s) => <span>{s}</span>)}
+    </div>
+  </div>
+
+  <footer class="foot">
+    <a href="mailto:support@byllora.com">support@byllora.com</a>
+  </footer>
+</Layout>
